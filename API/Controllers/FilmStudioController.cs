@@ -22,6 +22,7 @@ namespace API.Controllers
         }
 
         [HttpPost("register")]
+
 public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStudioDTO FilmStudioDTO)
 {
     if (string.IsNullOrWhiteSpace(FilmStudioDTO.Name) ||
@@ -61,7 +62,5 @@ public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStud
         filmStudioCity = newFilmStudio.FilmStudioCity
     });
 }
-
-
     }
 }
