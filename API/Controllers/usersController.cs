@@ -1,6 +1,7 @@
 using API.Data;
 using API.Models;
 using API.Models.DTO;
+using API.Models.FilmStudio;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,10 @@ namespace API.Controllers
     public class usersController : ControllerBase
     {
         private readonly AppDbContext _context; 
+        private readonly PasswordHasher<string> _passwordHasher = new();
+
+        private readonly string AdminToken = "Admin-1234-4321";
+        private readonly string FilmstudioToken = "Filmstudio-5678-8765";
 
         public usersController(AppDbContext context)
         {
@@ -23,17 +28,14 @@ namespace API.Controllers
         public async Task<ActionResult<UserDTO>> RegisterAdmin(UserRegisterDTO userRegisterDTO)
         {
             if(string.IsNullOrWhiteSpace(userRegisterDTO.UserName) ||
-            string.IsNullOrWhiteSpace(userRegisterDTO.Password))
+            string.IsNullOrWhiteSpace(userRegisterDTO.Password) ||
+            string.IsNullOrWhiteSpace(userRegisterDTO.Email))
             {
                 return BadRequest(new {message = "Användarnamn, E-postadress och lösenord krävs."});
             }
 
-            if(!userRegisterDTO.IsAdmin)
-            {
-                return BadRequest(new {message = "det fungerade ej."});
-            }
 
-            var existingAdmin = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == userRegisterDTO.UserName);
+            var existingAdmin = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == userRegisterDTO.Email);
             if(existingAdmin != null)
             {
                 return Conflict(new { message = "E-postadressen är redan registrerad till ett konto." });
@@ -45,6 +47,7 @@ namespace API.Controllers
             var newAdmin = new User 
             {
                 UserName = userRegisterDTO.UserName,
+                UserEmail = userRegisterDTO.Email,
                 HashedPassword = hashedPassword,
                 IsAdmin = true
             };
@@ -60,6 +63,58 @@ namespace API.Controllers
             };
 
             return Ok(UserDTO);
+        }
+
+        [HttpPost("authenticate")]
+        public async Task<ActionResult<object>> AutheticateFilmstudioAndAdmin(UserAuthenticateDTO userAuthenticateDTO)
+        {
+            if(string.IsNullOrWhiteSpace(userAuthenticateDTO.Email) || 
+            string.IsNullOrWhiteSpace(userAuthenticateDTO.Username) ||
+            string.IsNullOrWhiteSpace(userAuthenticateDTO.Password))
+            {
+                return BadRequest(new {message = "Användarnamn, E-postadress och lösenord krävs."});
+            }
+
+            var admin = await _context.users.FirstOrDefaultAsync(u => u.UserEmail == userAuthenticateDTO.Email);
+            if(admin != null)
+            {
+                var result = _passwordHasher.VerifyHashedPassword(null, admin.HashedPassword, userAuthenticateDTO.Password);
+                if(result == PasswordVerificationResult.Success)
+                {
+                    return Ok( new 
+                    {
+                        Username = admin.UserName,
+                        Role = "Admin",
+                        userId = admin.UserId,
+                        Token = AdminToken
+                    });
+                }
+            }
+
+            var filmStudio = await _context.FilmStudios.FirstOrDefaultAsync(fs => fs.FilmStudioEmail == userAuthenticateDTO.Email);
+            if(filmStudio != null)
+            {
+                var result = _passwordHasher.VerifyHashedPassword(null, filmStudio.Password, userAuthenticateDTO.Password);
+                if(result == PasswordVerificationResult.Success)
+                {
+                    return Ok(new 
+                    {
+                        username = filmStudio.FilmStudioName,
+                        Role = "Filmstudio",
+                        FilmStudioId = filmStudio.FilmStudioId,
+                        filmStudio = new FilmStudioDTO 
+                        {
+                            FilmStudioId = filmStudio.FilmStudioId,
+                            FilmStudioName = filmStudio.FilmStudioName,
+                            FilmStudioEmail = filmStudio.FilmStudioEmail,
+                            FilmStudioCity = filmStudio.FilmStudioCity
+                        },
+                        Token = FilmstudioToken
+                    });
+                }
+            }
+
+            return Unauthorized (new {message = "Felaktig E-postadress eller lösenord."});
         }
     }
 }

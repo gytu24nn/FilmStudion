@@ -4,7 +4,7 @@ namespace API.Models.interfaces;
 
 public interface IUserRegister
 {
-    public int UserId {get; set;}
-    public string UserName {get; set;}
-    public bool IsAdmin {get; set;}
+    string UserName { get; set; }  // Användarnamn (kan vara e-postadress)
+    string Password { get; set; }  
+    public string Email {get; set;}
 }
