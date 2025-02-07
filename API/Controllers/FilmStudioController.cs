@@ -28,7 +28,7 @@ public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStud
     if (string.IsNullOrWhiteSpace(FilmStudioDTO.Name) ||
         string.IsNullOrWhiteSpace(FilmStudioDTO.Email) ||
         string.IsNullOrWhiteSpace(FilmStudioDTO.Password) ||
-        string.IsNullOrWhiteSpace(FilmStudioDTO.city))
+        string.IsNullOrWhiteSpace(FilmStudioDTO.City))
     {
         return BadRequest(new { message = "Alla fälten måste vara ifyllda." });
     }
@@ -48,7 +48,7 @@ public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStud
         FilmStudioDTO.Name,
         FilmStudioDTO.Email,
         hashedPassword,
-        FilmStudioDTO.city
+        FilmStudioDTO.City
     );
 
     _context.FilmStudios.Add(newFilmStudio);
