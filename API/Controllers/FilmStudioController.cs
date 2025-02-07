@@ -22,38 +22,45 @@ namespace API.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStudioDTO FilmStudioDTO)
-        {
-            if (string.IsNullOrWhiteSpace(FilmStudioDTO.Name) ||
-            string.IsNullOrWhiteSpace(FilmStudioDTO.Email) ||
-            string.IsNullOrWhiteSpace(FilmStudioDTO.Password))
-            {
-                return BadRequest(new { message = "Alla fälten måste vara i fyllda." });
-            }
 
-            var existingFilmStudio = await _context.FilmStudios.FirstOrDefaultAsync(Fs => Fs.FilmStudioEmail == FilmStudioDTO.Email);
+public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStudioDTO FilmStudioDTO)
+{
+    if (string.IsNullOrWhiteSpace(FilmStudioDTO.Name) ||
+        string.IsNullOrWhiteSpace(FilmStudioDTO.Email) ||
+        string.IsNullOrWhiteSpace(FilmStudioDTO.Password) ||
+        string.IsNullOrWhiteSpace(FilmStudioDTO.city))
+    {
+        return BadRequest(new { message = "Alla fälten måste vara ifyllda." });
+    }
 
-            if (existingFilmStudio != null)
-            {
-                return Conflict(new { message = "E-postadressen är redan registrerad till ett konto." });
-            }
+    var existingFilmStudio = await _context.FilmStudios
+        .FirstOrDefaultAsync(fs => fs.FilmStudioEmail == FilmStudioDTO.Email);
 
-            var passwordHasher = new PasswordHasher<string>();
-            var hashedPassword = passwordHasher.HashPassword(string.Empty, FilmStudioDTO.Password);
+    if (existingFilmStudio != null)
+    {
+        return Conflict(new { message = "E-postadressen är redan registrerad." });
+    }
 
-            FilmStudio newFilmStudio = new FilmStudio(FilmStudioDTO.Name, FilmStudioDTO.Email, hashedPassword, FilmStudioDTO.City);
+    var passwordHasher = new PasswordHasher<string>();
+    var hashedPassword = passwordHasher.HashPassword(null, FilmStudioDTO.Password);
 
-            _context.FilmStudios.Add(newFilmStudio);
-            await _context.SaveChangesAsync();
+    var newFilmStudio = new FilmStudio(
+        FilmStudioDTO.Name,
+        FilmStudioDTO.Email,
+        hashedPassword,
+        FilmStudioDTO.city
+    );
 
-            return Ok(new
-            {
-                filmstudioId = newFilmStudio.FilmStudioId,
-                filmStudioName = newFilmStudio.FilmStudioName,
-                filmStudioEmail = newFilmStudio.FilmStudioEmail,
-                filmStudioCity = newFilmStudio.FilmStudioCity
-            });
-        }
+    _context.FilmStudios.Add(newFilmStudio);
+    await _context.SaveChangesAsync();
 
+    return Ok(new
+    {
+        filmstudioId = newFilmStudio.FilmStudioId,
+        filmStudioName = newFilmStudio.FilmStudioName,
+        filmStudioEmail = newFilmStudio.FilmStudioEmail,
+        filmStudioCity = newFilmStudio.FilmStudioCity
+    });
+}
     }
 }
