@@ -10,6 +10,6 @@ public class RegisterFilmStudioDTO : IRegisterFilmStudio
     public int id {get; set;}
     public required string Name {get; set;} = string.Empty;
     public required string Email {get; set;} = string.Empty;
-    public required string HashedPassword {get; set;} = string.Empty;
-    public required string city {get; set;} 
+    public required string Password {get; set;} = string.Empty;
+    public required string City {get; set;} 
 }

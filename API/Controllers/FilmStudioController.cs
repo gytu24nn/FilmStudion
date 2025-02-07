@@ -26,7 +26,7 @@ namespace API.Controllers
         {
             if (string.IsNullOrWhiteSpace(FilmStudioDTO.Name) ||
             string.IsNullOrWhiteSpace(FilmStudioDTO.Email) ||
-            string.IsNullOrWhiteSpace(FilmStudioDTO.HashedPassword))
+            string.IsNullOrWhiteSpace(FilmStudioDTO.Password))
             {
                 return BadRequest(new { message = "Alla fälten måste vara i fyllda." });
             }
@@ -39,9 +39,9 @@ namespace API.Controllers
             }
 
             var passwordHasher = new PasswordHasher<string>();
-            var hashedPassword = passwordHasher.HashPassword(string.Empty, FilmStudioDTO.HashedPassword);
+            var hashedPassword = passwordHasher.HashPassword(string.Empty, FilmStudioDTO.Password);
 
-            FilmStudio newFilmStudio = new FilmStudio(FilmStudioDTO.Name, FilmStudioDTO.Email, hashedPassword, FilmStudioDTO.city);
+            FilmStudio newFilmStudio = new FilmStudio(FilmStudioDTO.Name, FilmStudioDTO.Email, hashedPassword, FilmStudioDTO.City);
 
             _context.FilmStudios.Add(newFilmStudio);
             await _context.SaveChangesAsync();
