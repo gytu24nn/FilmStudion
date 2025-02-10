@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using API.interfaces;
+using API.Models.FilmCopy;
 
 namespace API.Models.Film;
 
@@ -12,6 +13,9 @@ public class Film : IFilm
     public string MovieDescription {get; set;} = string.Empty;
     public string MovieGenre {get; set;} = string.Empty;
     public int MovieAvailableCopies {get; set;}
+    public DateTime dateTime {get; set;}
+    public List<API.Models.FilmCopy.FilmCopy> filmCopies { get; set; } = new List<API.Models.FilmCopy.FilmCopy>();
+
     //Denna behövs senare
     //public List<FilmLoan> filmLoans {get; set;} = new List<FilmLoan>();
 

@@ -19,7 +19,7 @@ public class AppDbContext : DbContext
 
     public DbSet<Film> Films {get; set;}
     public DbSet<FilmStudio> FilmStudios {get; set;}
-    public DbSet<RegisterFilmStudioDTO> registerFilmStudioDTOs {get; set;}
+
     public DbSet<User> users {get; set;}
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
