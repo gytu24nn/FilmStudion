@@ -25,7 +25,7 @@ namespace API.Controllers
 
 public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStudioDTO FilmStudioDTO)
 {
-    if (string.IsNullOrWhiteSpace(FilmStudioDTO.Name) ||
+    if (string.IsNullOrWhiteSpace(FilmStudioDTO.FilmstudioName) ||
         string.IsNullOrWhiteSpace(FilmStudioDTO.Email) ||
         string.IsNullOrWhiteSpace(FilmStudioDTO.Password) ||
         string.IsNullOrWhiteSpace(FilmStudioDTO.City))
@@ -45,7 +45,7 @@ public async Task<ActionResult<IFilmStudio>> RegisterFilmStudio(RegisterFilmStud
     var hashedPassword = passwordHasher.HashPassword(null, FilmStudioDTO.Password);
 
     var newFilmStudio = new FilmStudio(
-        FilmStudioDTO.Name,
+        FilmStudioDTO.FilmstudioName,
         FilmStudioDTO.Email,
         hashedPassword,
         FilmStudioDTO.City
