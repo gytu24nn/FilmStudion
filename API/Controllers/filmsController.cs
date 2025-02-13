@@ -1,3 +1,4 @@
+using System.Text;
 using API.Data;
 using API.Models.DTO;
 using API.Models.Film;
@@ -83,11 +84,69 @@ namespace API.Controllers
             
 
         }
+
+        [HttpGet]
+        public ActionResult<IEnumerable<object>> GetAllFilms()
+        {
+            var headers = Request.Headers;
+            string token = string.Empty;
+
+            if(headers.ContainsKey("Authorization"))
+            {
+                token = headers["Authorization"].ToString();
+
+                if(token.StartsWith("Bearer "))
+                {
+                    token = token.Substring("Bearer ".Length);
+                }
+            }
+
+            var films = _context.Films.ToList();
+            List<object> filmDTOs = new List<object>();
+
+            if(!string.IsNullOrEmpty(token) && (token == AdminToken || token == FilmstudioToken))
+            {
+                foreach (var film in films)
+                {
+                    var filmDTO = new FilmForAuthenticatedUsersDTO
+                    {
+                        MovieName = film.MovieName,
+                        MovieDescription = film.MovieDescription,
+                        MovieGenre = film.MovieGenre,
+                        MovieAvailableCopies = film.MovieAvailableCopies,
+                        dateTime = film.dateTime,
+                        FilmCopies = _context.filmCopies
+                        .Where(copy => copy.FilmId == film.MovieId)
+                        .Select(copy => new RentedFilmCopyDTO
+                        {
+                            
+                            FilmCopyId = copy.FilmCopyId,
+                            
+                        }).ToList()
+                    };
+
+                    filmDTOs.Add(filmDTO);
+                }
+            }
+            else 
+            {
+                foreach (var film in films)
+                {
+                    var filmDTO = new FilmForUnauthenticatedUsersDTO
+                    {
+                        MovieName = film.MovieName,
+                        MovieDescription = film.MovieDescription,
+                        MovieGenre = film.MovieGenre,
+                        MovieAvailableCopies = film.MovieAvailableCopies,
+                        dateTime = film.dateTime
+                    };
+
+                    filmDTOs.Add(filmDTO);                    
+                }
+            }
+
+            return Ok(filmDTOs);
+
+        }
     }
 }
-
-// Här kan du också lägga till en kontroll för filmstudio-token om det behövs
-    // if (token != "Filmstudio-5678-8765")
-    // {
-    //     return Unauthorized(new { message = "Felaktig token för filmstudio" });
-    // }
