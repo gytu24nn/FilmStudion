@@ -3,7 +3,7 @@ using API.interfaces;
 
 namespace API.Models.DTO;
 
-public class FilmForAuthenticatedUsersDTO : IFilm
+public class FilmForUnauthenticatedUsersDTO : IFilm
 {
     public string MovieName {get; set;} = string.Empty;
     public string MovieDescription {get; set;} = string.Empty;
@@ -11,5 +11,5 @@ public class FilmForAuthenticatedUsersDTO : IFilm
     public int MovieAvailableCopies {get; set;}
     public DateTime dateTime {get; set;}
 
-    public List<API.Models.DTO.RentedFilmCopyDTO> FilmCopies { get; set; } = new List<API.Models.DTO.RentedFilmCopyDTO>();
+   
 }
