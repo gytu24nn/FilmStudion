@@ -11,8 +11,6 @@ public class FilmForUnauthenticatedUsersDTO : IFilm
     public int MovieAvailableCopies {get; set;}
     public DateTime dateTime {get; set;}
 
-    public List<API.Models.FilmCopy.FilmCopy> filmCopies { get; set; } = null; // Eller sätt den som null för oautentiserade
-
 
 
    
