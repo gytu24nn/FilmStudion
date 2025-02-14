@@ -1,8 +1,8 @@
 using System;
 
-namespace API.Models.DTO;
+namespace API.Models.RentedFilmsCopies;
 
-public class RentedFilmCopyDTO
+public class RentedFilmCopies
 {
     public int FilmCopyId {get; set;}
     public int MovieId {get; set;}
