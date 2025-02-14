@@ -120,7 +120,7 @@ namespace API.Controllers
                         MovieId = copy.FilmId
                     }).ToList();
             }
-            // Annars (oautentiserad eller obehörig filmstudio)
+            // Annars (obehörig filmstudio)
             else
             {
                 filmStudioDTO.FilmStudioCity = null;
