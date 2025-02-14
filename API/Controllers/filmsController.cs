@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using API.Data;
 using API.interfaces;
@@ -6,6 +7,7 @@ using API.Models.Film;
 using API.Models.FilmCopy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory.ValueGeneration.Internal;
 
@@ -29,29 +31,29 @@ namespace API.Controllers
         {
             var headers = Request.Headers;
 
-            if(!headers.ContainsKey("Authorization"))
+            if (!headers.ContainsKey("Authorization"))
             {
-                return Unauthorized(new {message = "Ingen behörighet."});
+                return Unauthorized(new { message = "Ingen behörighet." });
             }
 
             var token = headers["Authorization"].ToString();
 
-            if(token.StartsWith("Bearer "))
+            if (token.StartsWith("Bearer "))
             {
                 token = token.Substring("Bearer ".Length);
             }
 
-            if(token != AdminToken)
+            if (token != AdminToken)
             {
-                return Unauthorized(new {message = "Felaktig token, försök igen!"});
+                return Unauthorized(new { message = "Felaktig token, försök igen!" });
             }
 
-            var newFilm = new Film 
+            var newFilm = new Film
             {
                 MovieName = createFilmDTO.MovieName,
                 MovieDescription = createFilmDTO.MovieDescription,
                 MovieGenre = createFilmDTO.MovieGenre,
-                dateTimeCreatedOrUpdated  = DateTime.UtcNow
+                dateTimeCreatedOrUpdated = DateTime.UtcNow
 
             };
 
@@ -60,32 +62,35 @@ namespace API.Controllers
 
             for (int i = 0; i < createFilmDTO.MovieAvailableCopies; i++)
             {
-                newFilm.filmCopies.Add(new FilmCopy
+                var newCopy = new FilmCopy
                 {
                     FilmId = newFilm.MovieId,
                     IsAvailable = true
-                });
+                };
+                _context.filmCopies.Add(newCopy);
             }
+
+            await _context.SaveChangesAsync();
 
             newFilm.MovieAvailableCopies = newFilm.filmCopies.Count;
 
             await _context.SaveChangesAsync();
 
-            return Ok(new 
-            { 
+            return Ok(new
+            {
                 newFilm.MovieId,
-                    newFilm.MovieName,
-                    newFilm.MovieDescription,
-                    newFilm.MovieGenre,
-                    newFilm.MovieAvailableCopies,
-                    newFilm.dateTimeCreatedOrUpdated ,
-                    filmCopies = newFilm.filmCopies.Select(copy => new FilmCopy
-                    {
-                        FilmCopyId = copy.FilmCopyId,
-                        FilmId = copy.FilmId
-                    }).ToList()
+                newFilm.MovieName,
+                newFilm.MovieDescription,
+                newFilm.MovieGenre,
+                newFilm.MovieAvailableCopies,
+                newFilm.dateTimeCreatedOrUpdated,
+                filmCopies = newFilm.filmCopies.Select(copy => new FilmCopy
+                {
+                    FilmCopyId = copy.FilmCopyId,
+                    FilmId = copy.FilmId
+                }).ToList()
             });
-            
+
 
         }
 
@@ -118,15 +123,14 @@ namespace API.Controllers
                         MovieDescription = film.MovieDescription,
                         MovieGenre = film.MovieGenre,
                         MovieAvailableCopies = film.MovieAvailableCopies,
-                        dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated ,
+                        dateTimeCreatedOrUpdated = film.dateTimeCreatedOrUpdated,
                         filmCopies = _context.filmCopies
-                        .Where(copy => copy.FilmCopyId == film.MovieId)
+                        .Where(copy => copy.FilmId == film.MovieId) // Här ändras FilmCopyId till FilmId
                         .Select(copy => new FilmCopy
                         {
-
                             FilmCopyId = copy.FilmCopyId,
-
                         }).ToList()
+
                     };
 
                     filmDTOs.Add(filmDTO);
@@ -142,7 +146,7 @@ namespace API.Controllers
                         MovieDescription = film.MovieDescription,
                         MovieGenre = film.MovieGenre,
                         MovieAvailableCopies = film.MovieAvailableCopies,
-                        dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated 
+                        dateTimeCreatedOrUpdated = film.dateTimeCreatedOrUpdated
                     };
 
                     filmDTOs.Add(filmDTO);
@@ -159,25 +163,25 @@ namespace API.Controllers
             var headers = Request.Headers;
             string token = string.Empty;
 
-            if(headers.ContainsKey("Authorization"))
+            if (headers.ContainsKey("Authorization"))
             {
                 token = headers["Authorization"].ToString();
 
-                if(token.StartsWith("Bearer "))
+                if (token.StartsWith("Bearer "))
                 {
                     token = token.Substring("Bearer ".Length);
                 }
             }
 
             var film = _context.Films.FirstOrDefault(f => f.MovieId == id);
-            if(film == null)
+            if (film == null)
             {
-                return NotFound(new {message = "Ingen film med det ID finns. Försök igen"});
+                return NotFound(new { message = "Ingen film med det ID finns. Försök igen" });
             }
 
             object filmDTO;
 
-            if(!string.IsNullOrEmpty(token) && (token == AdminToken || token == FilmstudioToken))
+            if (!string.IsNullOrEmpty(token) && (token == AdminToken || token == FilmstudioToken))
             {
                 filmDTO = new FilmForAuthenticatedUsersDTO
                 {
@@ -185,16 +189,16 @@ namespace API.Controllers
                     MovieDescription = film.MovieDescription,
                     MovieGenre = film.MovieGenre,
                     MovieAvailableCopies = film.MovieAvailableCopies,
-                    dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated ,
+                    dateTimeCreatedOrUpdated = film.dateTimeCreatedOrUpdated,
                     filmCopies = _context.filmCopies
-                    .Where(copy => copy.FilmCopyId == film.MovieId)
+                    .Where(copy => copy.FilmId == film.MovieId) // Här ändras FilmCopyId till FilmId
                     .Select(copy => new FilmCopy
                     {
-                        FilmCopyId = copy.FilmCopyId 
+                        FilmCopyId = copy.FilmCopyId,
                     }).ToList()
                 };
             }
-            else 
+            else
             {
                 filmDTO = new FilmForUnauthenticatedUsersDTO
                 {
@@ -202,7 +206,7 @@ namespace API.Controllers
                     MovieDescription = film.MovieDescription,
                     MovieGenre = film.MovieGenre,
                     MovieAvailableCopies = film.MovieAvailableCopies,
-                    dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated 
+                    dateTimeCreatedOrUpdated = film.dateTimeCreatedOrUpdated
                 };
             }
 
@@ -212,36 +216,57 @@ namespace API.Controllers
         [HttpPatch("{id}")]
         public ActionResult<IFilm> UpdateFilm(int id, [FromBody] FilmForUnauthenticatedUsersDTO updatedFilm)
         {
+            // Autentisering och tokenvalidering
             var headers = Request.Headers;
             string token = string.Empty;
 
-            if(headers.ContainsKey("Authorization"))
+            if (headers.ContainsKey("Authorization"))
             {
                 token = headers["Authorization"].ToString();
-                if(token.StartsWith("Bearer "))
+                if (token.StartsWith("Bearer "))
                 {
                     token = token.Substring("Bearer ".Length);
                 }
             }
 
-            if(string.IsNullOrEmpty(token) || token != AdminToken)
+            if (string.IsNullOrEmpty(token) || token != AdminToken)
             {
-                return Unauthorized(new {message = "Ej behörig."});
+                return Unauthorized(new { message = "Ej behörig." });
             }
 
+            // Hämta filmen från databasen
             var film = _context.Films.FirstOrDefault(f => f.MovieId == id);
-            if(film == null)
+            if (film == null)
             {
-                return NotFound(new {message = "Ingen film med det ID finns. Försök igen!"});
+                return NotFound(new { message = "Ingen film med det ID finns. Försök igen!" });
             }
-
-            int oldAvailableCopies = film.MovieAvailableCopies;
 
             film.MovieName = updatedFilm.MovieName ?? film.MovieName;
             film.MovieDescription = updatedFilm.MovieDescription ?? film.MovieDescription;
             film.MovieGenre = updatedFilm.MovieGenre ?? film.MovieGenre;
-            film.MovieAvailableCopies = updatedFilm.MovieAvailableCopies;
-            film.dateTimeCreatedOrUpdated  = DateTime.Now; 
+
+            if (updatedFilm.MovieAvailableCopies >= 0)
+            {
+                var existingCopies = film.filmCopies.ToList();
+                _context.filmCopies.RemoveRange(existingCopies);
+                _context.SaveChanges();
+
+                for(int i = 0; i < updatedFilm.MovieAvailableCopies; i++)
+                {
+                    var newCopy = new FilmCopy
+                    {
+                        IsAvailable = true,
+                        FilmId = film.MovieId
+                    };
+                    film.filmCopies.Add(newCopy);
+                }
+
+                 film.MovieAvailableCopies = updatedFilm.MovieAvailableCopies;
+
+                _context.SaveChanges();
+            }
+
+            film.dateTimeCreatedOrUpdated = DateTime.Now;
 
             _context.SaveChanges();
 
@@ -251,7 +276,7 @@ namespace API.Controllers
                 MovieDescription = film.MovieDescription,
                 MovieGenre = film.MovieGenre,
                 MovieAvailableCopies = film.MovieAvailableCopies,
-                dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated 
+                dateTimeCreatedOrUpdated = film.dateTimeCreatedOrUpdated
             };
 
             return Ok(updatedFilmDTO);
