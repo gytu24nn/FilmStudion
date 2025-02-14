@@ -1,10 +1,12 @@
 using System.Text;
 using API.Data;
+using API.interfaces;
 using API.Models.DTO;
 using API.Models.Film;
 using API.Models.FilmCopy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.InMemory.ValueGeneration.Internal;
 
 namespace API.Controllers
@@ -46,10 +48,10 @@ namespace API.Controllers
 
             var newFilm = new Film 
             {
-                MovieName = createFilmDTO.MovieTitle,
-                MovieDescription = createFilmDTO.Description,
-                MovieGenre = createFilmDTO.Genre,
-                dateTime = DateTime.UtcNow
+                MovieName = createFilmDTO.MovieName,
+                MovieDescription = createFilmDTO.MovieDescription,
+                MovieGenre = createFilmDTO.MovieGenre,
+                dateTimeCreatedOrUpdated  = DateTime.UtcNow
 
             };
 
@@ -76,7 +78,7 @@ namespace API.Controllers
                     newFilm.MovieDescription,
                     newFilm.MovieGenre,
                     newFilm.MovieAvailableCopies,
-                    newFilm.dateTime,
+                    newFilm.dateTimeCreatedOrUpdated ,
                     filmCopies = newFilm.filmCopies.Select(copy => new FilmCopy
                     {
                         FilmCopyId = copy.FilmCopyId,
@@ -116,7 +118,7 @@ namespace API.Controllers
                         MovieDescription = film.MovieDescription,
                         MovieGenre = film.MovieGenre,
                         MovieAvailableCopies = film.MovieAvailableCopies,
-                        dateTime = film.dateTime,
+                        dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated ,
                         filmCopies = _context.filmCopies
                         .Where(copy => copy.FilmCopyId == film.MovieId)
                         .Select(copy => new FilmCopy
@@ -140,7 +142,7 @@ namespace API.Controllers
                         MovieDescription = film.MovieDescription,
                         MovieGenre = film.MovieGenre,
                         MovieAvailableCopies = film.MovieAvailableCopies,
-                        dateTime = film.dateTime
+                        dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated 
                     };
 
                     filmDTOs.Add(filmDTO);
@@ -183,7 +185,7 @@ namespace API.Controllers
                     MovieDescription = film.MovieDescription,
                     MovieGenre = film.MovieGenre,
                     MovieAvailableCopies = film.MovieAvailableCopies,
-                    dateTime = film.dateTime,
+                    dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated ,
                     filmCopies = _context.filmCopies
                     .Where(copy => copy.FilmCopyId == film.MovieId)
                     .Select(copy => new FilmCopy
@@ -200,11 +202,59 @@ namespace API.Controllers
                     MovieDescription = film.MovieDescription,
                     MovieGenre = film.MovieGenre,
                     MovieAvailableCopies = film.MovieAvailableCopies,
-                    dateTime = film.dateTime
+                    dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated 
                 };
             }
 
             return Ok(filmDTO);
+        }
+
+        [HttpPatch("{id}")]
+        public ActionResult<IFilm> UpdateFilm(int id, [FromBody] FilmForUnauthenticatedUsersDTO updatedFilm)
+        {
+            var headers = Request.Headers;
+            string token = string.Empty;
+
+            if(headers.ContainsKey("Authorization"))
+            {
+                token = headers["Authorization"].ToString();
+                if(token.StartsWith("Bearer "))
+                {
+                    token = token.Substring("Bearer ".Length);
+                }
+            }
+
+            if(string.IsNullOrEmpty(token) || token != AdminToken)
+            {
+                return Unauthorized(new {message = "Ej behörig."});
+            }
+
+            var film = _context.Films.FirstOrDefault(f => f.MovieId == id);
+            if(film == null)
+            {
+                return NotFound(new {message = "Ingen film med det ID finns. Försök igen!"});
+            }
+
+            int oldAvailableCopies = film.MovieAvailableCopies;
+
+            film.MovieName = updatedFilm.MovieName ?? film.MovieName;
+            film.MovieDescription = updatedFilm.MovieDescription ?? film.MovieDescription;
+            film.MovieGenre = updatedFilm.MovieGenre ?? film.MovieGenre;
+            film.MovieAvailableCopies = updatedFilm.MovieAvailableCopies;
+            film.dateTimeCreatedOrUpdated  = DateTime.Now; 
+
+            _context.SaveChanges();
+
+            var updatedFilmDTO = new FilmForUnauthenticatedUsersDTO
+            {
+                MovieName = film.MovieName,
+                MovieDescription = film.MovieDescription,
+                MovieGenre = film.MovieGenre,
+                MovieAvailableCopies = film.MovieAvailableCopies,
+                dateTimeCreatedOrUpdated  = film.dateTimeCreatedOrUpdated 
+            };
+
+            return Ok(updatedFilmDTO);
         }
     }
 }
