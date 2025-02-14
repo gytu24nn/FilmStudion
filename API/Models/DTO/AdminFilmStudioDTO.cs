@@ -12,5 +12,5 @@ public class AdminFilmStudioDTO : IFilmStudio
 
     // Utöver interfacet
     public string FilmStudioCity { get; set; } = string.Empty;
-    public List<API.Models.DTO.RentedFilmCopyDTO> RentedFilmCopies { get; set; } = new List<API.Models.DTO.RentedFilmCopyDTO>();
+    public List<API.Models.RentedFilmsCopies.RentedFilmCopies> RentedFilmCopies { get; set; } = new List<API.Models.RentedFilmsCopies.RentedFilmCopies>();
 }

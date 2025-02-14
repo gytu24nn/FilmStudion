@@ -3,6 +3,7 @@ using API.interfaces;
 using API.Models;
 using API.Models.DTO;
 using API.Models.FilmStudio;
+using API.Models.RentedFilmsCopies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -75,7 +76,6 @@ namespace API.Controllers
             if (headers.ContainsKey("Authorization"))
             {
                 token = headers["Authorization"].ToString();
-
                 if (token.StartsWith("Bearer "))
                 {
                     token = token.Substring("Bearer ".Length);
@@ -88,7 +88,7 @@ namespace API.Controllers
                 return NotFound(new { message = "Ingen filmstudio med det id hittades! Försök igen!" });
             }
 
-            // Skapa FilmStudioDTO med grunddata
+            // Skapa FilmStudioDTO med grunddata (som alltid returneras)
             var filmStudioDTO = new FilmStudioDTO
             {
                 FilmStudioId = filmstudio.FilmStudioId,
@@ -102,34 +102,39 @@ namespace API.Controllers
                 filmStudioDTO.FilmStudioCity = filmstudio.FilmStudioCity;
                 filmStudioDTO.RentedFilmCopies = _context.filmCopies
                     .Where(copy => copy.FilmStudioId == filmstudio.FilmStudioId && copy.IsRented)
-                    .Select(copy => new RentedFilmCopyDTO
+                    .Select(copy => new RentedFilmCopies
                     {
                         FilmCopyId = copy.FilmCopyId,
                         MovieId = copy.FilmId
                     }).ToList();
             }
-            // Om användaren är en filmstudio och id matchar
-            else if (!string.IsNullOrEmpty(token) && token == FilmstudioToken && filmstudio.FilmStudioId == id)
+            // Om användaren är en filmstudio som matchar id
+            else if (!string.IsNullOrEmpty(token) && IsFilmStudioTokenValid(token, id))
             {
                 filmStudioDTO.FilmStudioCity = filmstudio.FilmStudioCity;
                 filmStudioDTO.RentedFilmCopies = _context.filmCopies
                     .Where(copy => copy.FilmStudioId == filmstudio.FilmStudioId && copy.IsRented)
-                    .Select(copy => new RentedFilmCopyDTO
+                    .Select(copy => new RentedFilmCopies
                     {
                         FilmCopyId = copy.FilmCopyId,
                         MovieId = copy.FilmId
                     }).ToList();
             }
-            // Om användaren är oautentiserad eller filmstudio inte matchar
+            // Annars (oautentiserad eller obehörig filmstudio)
             else
             {
-                // Endast grundläggande information, utan city eller rentedFilmCopies
                 filmStudioDTO.FilmStudioCity = null;
-                filmStudioDTO.RentedFilmCopies = new List<RentedFilmCopyDTO>();
+                filmStudioDTO.RentedFilmCopies = new List<RentedFilmCopies>();
             }
 
             return Ok(filmStudioDTO);
         }
+
+        private bool IsFilmStudioTokenValid(string token, int filmStudioId)
+        {
+            return token == FilmstudioToken;
+        }
+
 
 
 

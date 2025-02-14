@@ -32,7 +32,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<FilmStudio>()
         .HasKey(Fs => Fs.FilmStudioId);
 
-        modelBuilder.Entity<RegisterFilmStudioDTO>()
-        .HasKey(Rfs => Rfs.id);
+        
+
+        
     }
 }
