@@ -12,6 +12,14 @@ builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseInMemoryDatabase("FilmStudioData"));
 
+builder.Services.AddCors(options => 
+{
+    options.AddPolicy("AllowLocalhost", builder =>
+        builder.WithOrigins("http://127.0.0.1:5500")
+        .AllowAnyMethod()
+        .AllowAnyHeader());
+});
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -23,6 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AllowLocalhost");
 
 app.UseAuthorization();
 
