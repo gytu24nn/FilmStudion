@@ -283,5 +283,88 @@ namespace API.Controllers
 
             return Ok(updatedFilmDTO);
         }
+
+        [HttpPost("rent")]
+        public async Task<IActionResult> RentFilm([FromQuery] int id, [FromQuery] int studioid)
+        {
+            var headers = Request.Headers;
+            string token = string.Empty;
+
+            // Hämta token från Authorization headern
+            if (headers.ContainsKey("Authorization"))
+            {
+                token = headers["Authorization"].ToString();
+
+                // Om token börjar med "Bearer ", extrahera själva token
+                if (token.StartsWith("Bearer "))
+                {
+                    token = token.Substring("Bearer ".Length);
+                }
+            }
+
+            // Kontrollera om token är tom
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new { message = "Ej behörig." });
+            }
+
+            // Kontrollera om token är för admin (admin får inte hyra filmer)
+            if (token == AdminToken)
+            {
+                return Unauthorized(new { message = "Ej behörig som admin att låna filmer." });
+            }
+
+            // Kontrollera om token är för filmstudio
+            if (token == FilmstudioToken)
+            {
+                var filmstudio = await _context.FilmStudios.FirstOrDefaultAsync(f => f.FilmStudioId == studioid);
+
+                // Kontrollera om filmstudion finns
+                if (filmstudio == null)
+                {
+                    return Unauthorized(new { message = "Ingen filmstudio matchar id:t." });
+                }
+
+                // Hämta filmen från databasen
+                var film = await _context.Films
+                    .Include(f => f.filmCopies)
+                    .FirstOrDefaultAsync(f => f.MovieId == id);
+
+                // Om filmen inte finns, returnera Conflict
+                if (film == null)
+                {
+                    return Conflict(new { message = "Filmen kunde inte hittas." });
+                }
+
+                // Kontrollera om det finns lediga kopior av filmen
+                var availableCopy = film.filmCopies.FirstOrDefault(c => c.IsAvailable);
+
+                // Om det inte finns lediga kopior, returnera Conflict
+                if (availableCopy == null)
+                {
+                    return Conflict(new { message = "Inga tillgängliga kopior av filmen finns." });
+                }
+
+                // Kontrollera om filmstudion redan hyr en kopia av samma film
+                if (film.filmCopies.Any(c => c.FilmStudioId == studioid))
+                {
+                    return StatusCode(403, new { message = "Filmstudion hyr redan en kopia av denna film." });
+                }
+
+                // Markera filmen som uthyrd och tilldela filmstudion en kopia
+                availableCopy.IsAvailable = false;
+                availableCopy.FilmStudioId = studioid;
+
+                // Spara ändringarna i databasen
+                await _context.SaveChangesAsync();
+
+                // Returnera OK om allt gick bra
+                return Ok(new { message = "Filmen har lånats ut.", filmId = id, studioId = studioid });
+            }
+
+            // Om token inte matchar någon av de förväntade, returnera Unauthorized
+            return Unauthorized(new { message = "Ogiltig token." });
+        }
+
     }
 }
