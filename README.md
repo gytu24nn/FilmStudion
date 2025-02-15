@@ -33,6 +33,7 @@ The API can be tested using tools like Postman.
 3. To log in, you ned to register a film studio using Postman or the API
 4. Create a movie using Postman or the API to ensure there are movies available to view in the frontend.
 
+---
 
 ## **API Usage:**
 
@@ -53,6 +54,15 @@ Below are some common API endpoints for interacting with the FilmStudion system.
     "password": "test",
     "city": "Värnamo"
 
+}
+
+**Response Example:**
+```json
+{
+  "movieId": 1,
+  "title": "Inception",
+  "genre": "Sci-Fi",
+  "releaseYear": 2010
 }
 
 
