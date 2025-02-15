@@ -191,10 +191,12 @@ namespace API.Controllers
                     MovieAvailableCopies = film.MovieAvailableCopies,
                     dateTimeCreatedOrUpdated = film.dateTimeCreatedOrUpdated,
                     filmCopies = _context.filmCopies
-                    .Where(copy => copy.FilmId == film.MovieId) // Här ändras FilmCopyId till FilmId
+                    .Where(copy => copy.FilmId == film.MovieId) // Korrekt filtrering
                     .Select(copy => new FilmCopy
                     {
                         FilmCopyId = copy.FilmCopyId,
+                        FilmId = copy.FilmId,
+                        IsAvailable = copy.IsAvailable
                     }).ToList()
                 };
             }
@@ -247,11 +249,11 @@ namespace API.Controllers
 
             if (updatedFilm.MovieAvailableCopies >= 0)
             {
-                var existingCopies = film.filmCopies.ToList();
+                var existingCopies = _context.filmCopies.Where(copy => copy.FilmId == film.MovieId).ToList();
                 _context.filmCopies.RemoveRange(existingCopies);
                 _context.SaveChanges();
 
-                for(int i = 0; i < updatedFilm.MovieAvailableCopies; i++)
+                for (int i = 0; i < updatedFilm.MovieAvailableCopies; i++)
                 {
                     var newCopy = new FilmCopy
                     {
@@ -261,7 +263,7 @@ namespace API.Controllers
                     film.filmCopies.Add(newCopy);
                 }
 
-                 film.MovieAvailableCopies = updatedFilm.MovieAvailableCopies;
+                film.MovieAvailableCopies = updatedFilm.MovieAvailableCopies;
 
                 _context.SaveChanges();
             }
