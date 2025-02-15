@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filmstudio</title>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <h1>Välkommen till Filmstudion</h1>
+
+    <div id="login-Form">
+        <h2>Logga in</h2>
+        <form id="loginForm">
+            <label for="username">Användarnamn:</label>
+            <input type="text" id="username" required>
+            <br>
+
+            <label for="email">E-post:</label>
+            <input type="email" id="email" required>
+            <br>
+
+            <label for="password">Lösenord:</label>
+            <input type="password" id="password" required>
+            <br>
+            <button type="submit">Logga in</button>
+        </form>
+    </div>
+
+    <div id="movie-List" style="display: none;">
+        <h2>Tillgängliga filmer:</h2>
+        <ul id="films"></ul>
+        <button id="logoutBtn">Logga ut</button>
+    </div>
+</body>
+</html>
