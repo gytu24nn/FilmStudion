@@ -5,6 +5,7 @@ using API.interfaces;
 using API.Models.DTO;
 using API.Models.Film;
 using API.Models.FilmCopy;
+using API.Models.FilmStudio;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -365,6 +366,62 @@ namespace API.Controllers
             // Om token inte matchar någon av de förväntade, returnera Unauthorized
             return Unauthorized(new { message = "Ogiltig token." });
         }
+
+        [HttpPost("return")]
+        public async Task<IActionResult> ReturnFilm([FromQuery] int id, [FromQuery] int studioId)
+        {
+            var headers = Request.Headers;
+            string token = string.Empty;
+
+            if(headers.ContainsKey("Authorization"))
+            {
+                token = headers["Authorization"].ToString();
+
+                if(token.StartsWith("Bearer "))
+                {
+                    token = token.Substring("Bearer ".Length);
+                }
+            }
+
+            if(string.IsNullOrEmpty(token))
+            {
+                return Unauthorized(new {message = "ej behörig."});
+            }
+
+            if(token == FilmstudioToken)
+            {
+                var filmstudio = await _context.FilmStudios.FirstOrDefaultAsync(f => f.FilmStudioId == studioId);
+
+                if(filmstudio == null)
+                {
+                    return Unauthorized(new {message = "Ingen filmstudio med det ID finns"});
+                }
+
+                var film = await _context.Films.Include(f => f.filmCopies).FirstOrDefaultAsync(f => f.MovieId == id);
+
+                if(film == null)
+                {
+                    return Conflict(new {message = "Filmen kunde inte hittas."});
+                }
+
+                var rentedCopy = film.filmCopies.FirstOrDefault(c => c.FilmStudioId == studioId && !c.IsAvailable);
+
+                if(rentedCopy == null)
+                {
+                    return StatusCode(409, new {message = "Filmstudion har inte lånat denna filmen. "});
+                }
+
+                rentedCopy.IsAvailable = true;
+                rentedCopy.FilmStudioId = null;
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new {message = "Filmen har lämnats tillbaka.", filmId = id, studioid = studioId});
+            }
+
+            return Unauthorized(new {message = "Ogiltig token"});
+        }
+
 
     }
 }
