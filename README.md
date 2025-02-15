@@ -56,16 +56,6 @@ Below are some common API endpoints for interacting with the FilmStudion system.
 
 }
 
-**Response Example:**
-```json
-{
-  "movieId": 1,
-  "title": "Inception",
-  "genre": "Sci-Fi",
-  "releaseYear": 2010
-}
-
-
 
 
 
